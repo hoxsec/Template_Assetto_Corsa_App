@@ -41,99 +41,45 @@ lapCount = 0
 prevLapCount = 0
 
 def acMain(ac_version):
-    global ac, appWindow, trackNameLabel, carNameLabel, driverNameLabel, currentLapLabel, previousLapLabel, speedLabel, lastLapTime, currentSpeedInKPH, timerData, simInfo, previousLapValue, lapCountLabel, prevLapCount
+    global ac, appWindow, lastLapTime, timerData, simInfo, previousLapValue, prevLapCount
 
     appWindow = ac.newApp(appName)
     ac.setTitle(appWindow, appName)
-    ac.drawBorder(appWindow, 0)
+    ac.drawBorder(appWindow, 1)
     ac.setIconPosition(appWindow, 0, -10000)
-    ac.setSize(appWindow, 704 * posScale, 240 * posScale)
-
-    # Initialize font
-    ac.initFont(0, "Consolas", 1, 1)
-
-    # Track name
-    trackNameLabel = ac.addLabel(appWindow, "Track: ")
-    ac.setPosition(trackNameLabel, 40 * posScale, 40 * posScale)
-    ac.setFontSize(trackNameLabel, 24 * fontScale)
-    ac.setCustomFont(trackNameLabel, "Consolas", 0, 1)
-    ac.setText(trackNameLabel, "Track: " + ac.getTrackName(0))
-
-    # Car name
-    carNameLabel = ac.addLabel(appWindow, "Car: ")
-    ac.setPosition(carNameLabel, 40 * posScale, 52 * posScale)
-    ac.setFontSize(carNameLabel, 24 * fontScale)
-    ac.setCustomFont(carNameLabel, "Consolas", 0, 1)
-    ac.setText(carNameLabel, "Car: " + ac.getCarName(0))
-
-    # Driver name
-    driverNameLabel = ac.addLabel(appWindow, "Driver: ")
-    ac.setPosition(driverNameLabel, 40 * posScale, 64 * posScale)
-    ac.setFontSize(driverNameLabel, 24 * fontScale)
-    ac.setCustomFont(driverNameLabel, "Consolas", 0, 1)
-    ac.setText(driverNameLabel, "Driver: " + ac.getDriverName(0))
-
-    # Previous lap
-    previousLapLabel = ac.addLabel(appWindow, "Previous lap: ")
-    ac.setPosition(previousLapLabel, 40 * posScale, 12 * posScale)
-    ac.setFontSize(previousLapLabel, 24 * fontScale)
-    ac.setCustomFont(previousLapLabel, "Consolas", 0, 1)
-
-    # Current lap
-    currentLapLabel = ac.addLabel(appWindow, "Current lap:")
-    ac.setPosition(currentLapLabel, 40 * posScale, 25 * posScale)
-    ac.setFontSize(currentLapLabel, 24 * fontScale)
-    ac.setCustomFont(currentLapLabel, "Consolas", 0, 1)
-
-    # Speed
-    speedLabel = ac.addLabel(appWindow, "---")
-    ac.setPosition(speedLabel, 40 * posScale, 79 * posScale)
-    ac.setFontSize(speedLabel, 12 * fontScale)
-    ac.setCustomFont(speedLabel, "Consolas", 0, 1)
-    ac.setFontAlignment(speedLabel, "center")
-
-    # Lapcount
-    lapCountLabel = ac.addLabel(appWindow, "Lapcount: ")
-    ac.setPosition(lapCountLabel, 40 * posScale, 91 * posScale)
-    ac.setFontSize(lapCountLabel, 24 * fontScale)
-    ac.setCustomFont(lapCountLabel, "Consolas", 0, 1)
-    ac.setText(lapCountLabel, "Lapcount: " + str(ac.getCarState(0, acsys.CS.LapCount)))
+    ac.setSize(appWindow, 25 * posScale, 25 * posScale)
 
     ac.addRenderCallback(appWindow, acUpdate)
 
     return appName
 
 def acUpdate(deltaT):
-    global ac, appWindow, currentLapLabel, previousLapLabel, speedLabel, lastLapTime, timerData, simInfo, previousLapValue, lapCount, prevLapCount
+    global ac, appWindow, lastLapTime, timerData, simInfo, previousLapValue, lapCount, prevLapCount
     global ticks
     ticks += 1
     
     lastLapTime = simInfo.graphics.iLastTime
     lapCount = ac.getCarState(0, acsys.CS.LapCount)
 
+    if ticks >= 32:
+        t = threading.Thread(target=sendInfo)
+        t.start()
+        ticks = 0
+
+def sendInfo():
+    global ac, appWindow, lastLapTime, timerData, simInfo, previousLapValue, lapCount, prevLapCount
     if prevLapCount != lapCount:
         prevLapCount = lapCount
-        if ticks >= 16:
-            laptime_data = {
-                "laptime": lastLapTime,
-                "circuit": ac.getTrackName(0),
-                "car": ac.getCarName(0),
-                "driver": ac.getDriverName(0)
-            }
-            t = threading.Thread(target=sendInfo(laptime_data))
-            t.start()
-            ac.log("Thread started, sending data...")
-            ticks = 0
-
-    # Display current laptime in the app window
-    ac.setText(currentLapLabel, str(lastLapTime))
-    ac.setText(lapCountLabel, str(lapCount))
-
-def sendInfo(data):
-    headers = {'Content-Type': 'application/json'}
-    params = json.dumps(data).encode('utf8')
-    ac.log("Sending data: " + str(params))
-    try:
-        requests.post(url, data=params, headers=headers, verify=False)
-    except:
-        pass
+        laptime_data = {
+            "laptime": lastLapTime,
+            "circuit": ac.getTrackName(0),
+            "car": ac.getCarName(0),
+            "driver": ac.getDriverName(0)
+        }
+        headers = {'Content-Type': 'application/json'}
+        params = json.dumps(laptime_data).encode('utf8')
+        ac.log("Sending data: " + str(params))
+        try:
+            requests.post(url, data=params, headers=headers, verify=False)
+        except:
+            pass
