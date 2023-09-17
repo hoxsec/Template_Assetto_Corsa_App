@@ -1,16 +1,15 @@
 import ac, acsys
-import platform, os, sys, json
-from third_party.sim_info import *
-from third_party import requests
-import threading, datetime
+import os, sys, json
 
-if platform.architecture()[0] == "64bit":
-    sysdir = os.path.dirname(__file__) + '/third_party/'
-
+sysdir = os.path.dirname(__file__) + '/third_party/'
 sys.path.insert(0, sysdir)
 os.environ['PATH'] = os.environ['PATH'] + ";."
 
-url = "http://141.148.244.131:1120/record-laptime"
+from third_party.sim_info import *
+from third_party import requests
+import threading
+
+url = "http://dev.shanonithoer.nl/api/stats/update"
 appName = "Boosted Timer"
 width, height = 800, 800  # width and height of the app's window
 posScale = 1.3
@@ -36,7 +35,7 @@ def acMain(ac_version):
     ac.setTitle(appWindow, appName)
     ac.drawBorder(appWindow, 1)
     ac.setIconPosition(appWindow, 0, -10000)
-    ac.setSize(appWindow, 25 * posScale, 25 * posScale)
+    ac.setSize(appWindow, 50 * posScale, 50 * posScale)
 
     ac.addRenderCallback(appWindow, acUpdate)
 
@@ -50,7 +49,7 @@ def acUpdate(deltaT):
     lastLapTime = simInfo.graphics.iLastTime
     lapCount = ac.getCarState(0, acsys.CS.LapCount)
 
-    if ticks >= 32:
+    if ticks >= 200:
         t = threading.Thread(target=sendInfo)
         t.start()
         ticks = 0
