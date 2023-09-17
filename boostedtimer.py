@@ -1,14 +1,3 @@
-# AC App Template by Hunter Vaners
-# ------------------------------
-#
-# Don't forget to rename assettocorsa\apps\python\Template_Assetto_Corsa_App
-#           by assettocorsa\apps\python\[Your_App_Name_Without_Spaces]
-#  and
-# the file Template_Assetto_Corsa_App.py
-#           by Your_App_Name_Without_Spaces.py
-#
-# ------------------------------
-
 import ac, acsys
 import platform, os, sys, json
 from third_party.sim_info import *
@@ -78,7 +67,9 @@ def sendInfo():
         }
         headers = {'Content-Type': 'application/json'}
         params = json.dumps(laptime_data).encode('utf8')
-        ac.log("Sending data: " + str(params))
+        ac.log("---------")
+        ac.log("BoostedTimer - Sending data: " + str(params))
+        ac.log("---------")
         try:
             requests.post(url, data=params, headers=headers, verify=False)
         except:
